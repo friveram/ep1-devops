@@ -1,0 +1,29 @@
+- become: yes
+  hosts: all
+  name: nginx-install
+  tasks:
+    - name: Wait for apt to unlock
+      become: yes
+      shell:  while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
+
+    - name: Install nginx
+      apt:        
+        name: nginx
+        update_cache: yes
+        state: latest
+
+    - name: ping .2
+      shell: ping 172.16.16.2 >> /var/www/html/index.nginx-debian.html &
+      async: 30
+      poll: 0
+
+    - name: ping .3
+      shell: ping 172.16.16.3 >> /var/www/html/index.nginx-debian.html &
+      async: 30
+      poll: 0
+
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
